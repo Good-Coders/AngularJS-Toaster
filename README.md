@@ -12,6 +12,7 @@ gc-angular-toaster
 * bootstrap 3 and beyond... (no limit on toaster types)
 * toaster is used by passing an object instead of params
 * "toaster.pop" has been renamed to "toaster.add" to avoid confusion with javascript Array functions pop and push
+
 FROM
 ```javascript
     toaster.pop('success','We love objects!','A non blocking message!',null,);
