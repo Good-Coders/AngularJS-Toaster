@@ -1,8 +1,8 @@
 'use strict';
 
 /*
- * AngularJS Toaster
- * Version: 0.4.6
+ * Good Coders - AngularJS Toaster
+ * Version: 1.0.0
  *
  * Copyright 2013 Jiri Kavulak.  
  * All Rights Reserved.  
@@ -12,18 +12,31 @@
  * Author: Jiri Kavulak
  * Related to project of John Papa and Hans Fjällemark
  */
+angular.module('gc.toaster.tpls',[]).run(['$templateCache', function($templateCache){
+	$templateCache.put('template/toaster/toaster.html',
+		'<div  id="toast-container" ng-class="config.position">' +
+			'<div ng-repeat="toaster in toasters" class="toast" ng-class="toaster.type" ng-click="click(toaster)" ng-mouseover="stopTimer(toaster)"  ng-mouseout="restartTimer(toaster)">' +
+			'<div ng-class="config.title">{{toaster.title}}</div>' +
+			'<div ng-class="config.message" ng-switch on="toaster.messageOutputType">' +
+			'<div ng-switch-when="trustedHtml" ng-bind-html="toaster.html"></div>' +
+			'<div ng-switch-when="template"><div ng-include="toaster.messageTemplate"></div></div>' +
+			'<div ng-switch-default >{{toaster.message}}</div>' +
+			'</div>' +
+			'</div>' +
+			'</div>');
+}]);
 
-angular.module('toaster', ['ngAnimate'])
+angular.module('gc.toaster', ['gc.toaster.tpls','ngAnimate'])
 .service('toaster', ['$rootScope', function ($rootScope) {
-    this.pop = function (type, title, body, timeout, bodyOutputType, clickHandler) {
-        this.toast = {
-            type: type,
-            title: title,
-            body: body,
-            timeout: timeout,
-            bodyOutputType: bodyOutputType,
-            clickHandler: clickHandler
-        };
+    this.add = function (settings) {
+        this.toast = angular.extend({
+            type: null,
+            title: null,
+            message: null,
+            timeout: null,
+            messageOutputType: null,
+            clickHandler: null
+        },settings);
         $rootScope.$broadcast('toaster-newToast');
     };
 
@@ -41,15 +54,8 @@ angular.module('toaster', ['ngAnimate'])
     // 'on-fade-out': undefined,  // not implemented
     //'extended-time-out': 1000,    // not implemented
     'time-out': 5000, // Set timeOut and extendedTimeout to 0 to make it sticky
-    'icon-classes': {
-        error: 'toast-error',
-        info: 'toast-info',
-        success: 'toast-success',
-        warning: 'toast-warning'
-    },
-    'body-output-type': '', // Options: '', 'trustedHtml', 'template'
-    'body-template': 'toasterBodyTmpl.html',
-    'icon-class': 'toast-info',
+    'message-output-type': '', // Options: '', 'trustedHtml', 'template'
+    'message-template': 'toasterBodyTmpl.html',
     'position-class': 'toast-top-right',
     'title-class': 'toast-title',
     'message-class': 'toast-message'
@@ -81,21 +87,18 @@ function ($compile, $timeout, $sce, toasterConfig, toaster) {
             };
 
             function addToast(toast) {
-                toast.type = mergedConfig['icon-classes'][toast.type];
-                if (!toast.type)
-                    toast.type = mergedConfig['icon-class'];
-
+				toast.type = 'toast-' + toast.type;
                 id++;
                 angular.extend(toast, { id: id });
 
-                // Set the toast.bodyOutputType to the default if it isn't set
-                toast.bodyOutputType = toast.bodyOutputType || mergedConfig['body-output-type'];
-                switch (toast.bodyOutputType) {
+                // Set the toast.messageOutputType to the default if it isn't set
+                toast.messageOutputType = toast.messageOutputType || mergedConfig['message-output-type'];
+                switch (toast.messageOutputType) {
                     case 'trustedHtml':
-                        toast.html = $sce.trustAsHtml(toast.body);
+                        toast.html = $sce.trustAsHtml(toast.message);
                         break;
                     case 'template':
-                        toast.bodyTemplate = toast.body || mergedConfig['body-template'];
+                        toast.messageTemplate = toast.message || mergedConfig['message-template'];
                         break;
                 }
 
@@ -162,16 +165,6 @@ function ($compile, $timeout, $sce, toasterConfig, toaster) {
                 }
             };
         }],
-        template:
-        '<div  id="toast-container" ng-class="config.position">' +
-            '<div ng-repeat="toaster in toasters" class="toast" ng-class="toaster.type" ng-click="click(toaster)" ng-mouseover="stopTimer(toaster)"  ng-mouseout="restartTimer(toaster)">' +
-              '<div ng-class="config.title">{{toaster.title}}</div>' +
-              '<div ng-class="config.message" ng-switch on="toaster.bodyOutputType">' +
-                '<div ng-switch-when="trustedHtml" ng-bind-html="toaster.html"></div>' +
-                '<div ng-switch-when="template"><div ng-include="toaster.bodyTemplate"></div></div>' +
-                '<div ng-switch-default >{{toaster.body}}</div>' +
-              '</div>' +
-            '</div>' +
-        '</div>'
+        templateUrl: 'template/toaster/toaster.html'
     };
 }]);
